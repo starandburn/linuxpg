@@ -1,0 +1,74 @@
+<!doctype html>
+<!-- Adapted from https://github.com/dmccuk/learndevops src/components/BrowserVM.astro
+MIT License
+
+Copyright (c) 2026 Dennis McCarthy and contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+This licence covers the code in this repository: the website source, lab
+scripts, the course app and lab solutions. Written course content is licensed
+separately under CC BY 4.0; see LICENSE-CONTENT.
+
+--><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Linux Playground</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/css/xterm.css">
+<style>*{box-sizing:border-box}body{margin:0;background:#0a131c;color:#dce4ec;font:14px system-ui;height:100vh;height:100dvh;display:flex;flex-direction:column}header{display:flex;gap:8px;align-items:center;padding:4px 8px;background:#192632;flex-wrap:nowrap;flex-shrink:0;white-space:nowrap;overflow:hidden}header a{color:#aebdca;text-decoration:none;font-size:12px}header a:hover{text-decoration:underline}#status{margin-left:auto;font-size:12px;color:#aebdca}#terminal{flex:1;min-height:0;padding:8px;overflow:hidden}</style></head><body>
+<header><strong>Linux Playground</strong><a href="https://github.com/dmccuk/learndevops" target="_blank" rel="noopener noreferrer">Based on Learn DevOps</a><a href="https://github.com/dmccuk/learndevops/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a><span id="status" role="status">読み込み中…</span></header><main id="terminal"></main>
+<script type="module">
+const CONFIG = {base:'https://dmccuk.github.io/learndevops/vm/', fontSize:27, name:'ld-control', ip:'10.5.0.10/24', setup:['git config --global user.name "Student"','git config --global user.email "student@example.com"','git config --global init.defaultBranch main','git config --global core.editor nano','git config --global color.ui auto','mkdir -p ~/lesson','cd ~/lesson','echo alpha > notes.txt','echo beta >> notes.txt','echo gamma >> notes.txt']};
+const $=id=>document.getElementById(id); let term,fit,ready=false,emulator; 
+const status=s=>$('status').textContent=s;
+const headerDpr = window.devicePixelRatio || 1;
+function adjustHeaderScale(){document.querySelector("header").style.zoom = String(headerDpr / (window.devicePixelRatio || 1));}
+window.addEventListener("resize", adjustHeaderScale);
+function watchHeaderDpr(){const query=matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);query.addEventListener("change",()=>{adjustHeaderScale();watchHeaderDpr();},{once:true});}
+watchHeaderDpr();
+adjustHeaderScale();
+function resize(){if(term&&fit){fit.fit();}}
+async function start(){ status('読み込み中…');const started=performance.now();const timer=setTimeout(()=>{if(!ready)status('起動に時間がかかっています。必要に応じて ページを再読み込みしてください。')},90000);
+try{
+const [{V86},{Terminal},{FitAddon}]=await Promise.all([import('https://esm.sh/v86@0.5.472'),import('https://esm.sh/@xterm/xterm@6.0.0'),import('https://esm.sh/@xterm/addon-fit@0.11.0?deps=@xterm/xterm@6.0.0')]);
+const base=CONFIG.base;const checks=await Promise.all(['v86.wasm','state.bin.zst','fs.json'].map(async f=>(await fetch(base+f,{method:'HEAD'})).ok));if(!checks.every(Boolean))throw Error('Linux イメージを取得できません');
+term=new Terminal({convertEol:false,cursorBlink:true,fontFamily:'Consolas, monospace',fontSize:CONFIG.fontSize,theme:{background:'#0a131c',foreground:'#dce4ec',cursor:'#8fa8ff'}});fit=new FitAddon();term.loadAddon(fit);term.open($('terminal'));resize();new ResizeObserver(resize).observe($('terminal'));term.write('Starting Linux…\r\n');
+emulator = new V86({
+					wasm_path: `${base}v86.wasm`,
+					bios: { url: `${base}seabios.bin` },
+					vga_bios: { url: `${base}vgabios.bin` },
+					memory_size: 256 * 1024 * 1024,
+					vga_memory_size: 2 * 1024 * 1024,
+					initial_state: { url: `${base}state.bin.zst` },
+					filesystem: { baseurl: `${base}rootfs-flat/`, basefs: `${base}fs.json` },
+					net_device: { type: 'virtio', relay_url: 'inbrowser' },
+					autostart: true,
+					disable_keyboard: true,
+					disable_mouse: true,
+					// No sound needed, and the speaker loads a blob: worklet the CSP blocks.
+					disable_speaker: true,
+				});
+
+				
+let quiet=true,pending=[],scheduled=false,queue='',draining=false,tail='',waitDone=null;
+emulator.add_listener('download-error',()=>status('Linux イメージの読み込みに失敗しました。ページを再読み込みしてください。'));
+emulator.add_listener('serial0-output-byte',byte=>{tail=(tail+String.fromCharCode(byte)).slice(-64);if(waitDone&&tail.includes('LD-42')){const done=waitDone;waitDone=null;done()}if(quiet)return;pending.push(byte);if(!scheduled){scheduled=true;requestAnimationFrame(()=>{term.write(new Uint8Array(pending));pending=[];scheduled=false})}});
+function type(text){queue+=text;if(draining)return;draining=true;function drain(){if(!queue){draining=false;return}emulator.serial0_send(queue.slice(0,8));queue=queue.slice(8);setTimeout(drain,10)}drain()}
+function run(cmd){return new Promise(resolve=>{tail='';waitDone=resolve;type(cmd+'; echo LD-$((40+2))\n')})}
+emulator.add_listener('emulator-ready',async()=>{await new Promise(r=>setTimeout(r,200));resize();await run(`stty cols ${term.cols} rows ${term.rows}; sudo ld-net ${CONFIG.name} ${CONFIG.ip}; PS1='$ '; cd`+(CONFIG.setup.length?'; '+CONFIG.setup.join(' && '):''));quiet=false;term.reset();term.onData(type);type('\n');ready=true;clearTimeout(timer);status('Ready '+((performance.now()-started)/1000).toFixed(1)+' s');term.focus()});
+}catch(e){clearTimeout(timer);status('起動エラー: '+e.message+' — ページを再読み込みしてください。');console.error(e)}}
+start();
+</script></body></html>
