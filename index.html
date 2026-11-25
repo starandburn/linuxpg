@@ -26,10 +26,10 @@ This licence covers the code in this repository: the website source, lab
 scripts, the course app and lab solutions. Written course content is licensed
 separately under CC BY 4.0; see LICENSE-CONTENT.
 
---><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Linux Playground</title>
+--><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Linux Playground for NKK</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/css/xterm.css">
 <style>*{box-sizing:border-box}body{margin:0;background:#0a131c;color:#dce4ec;font:14px system-ui;height:100vh;height:100dvh;display:flex;flex-direction:column}header{display:flex;gap:8px;align-items:center;padding:4px 8px;background:#192632;flex-wrap:nowrap;flex-shrink:0;white-space:nowrap;overflow:hidden}header a{color:#aebdca;text-decoration:none;font-size:12px}header a:hover{text-decoration:underline}#status{margin-left:auto;font-size:12px;color:#aebdca}#terminal{flex:1;min-height:0;padding:8px;overflow:hidden}</style></head><body>
-<header><strong>Linux Playground</strong><a href="https://github.com/dmccuk/learndevops" target="_blank" rel="noopener noreferrer">Based on Learn DevOps</a><a href="https://github.com/dmccuk/learndevops/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a><span id="status" role="status">読み込み中…</span></header><main id="terminal"></main>
+<header><strong>Linux Playground for NKK</strong><a href="https://github.com/dmccuk/learndevops" target="_blank" rel="noopener noreferrer">Based on Learn DevOps</a><a href="https://github.com/dmccuk/learndevops/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a><span id="status" role="status">読み込み中…</span></header><main id="terminal"></main>
 <script type="module">
 const CONFIG = {base:'https://dmccuk.github.io/learndevops/vm/', fontSize:27, name:'ld-control', ip:'10.5.0.10/24', setup:['git config --global user.name "Student"','git config --global user.email "student@example.com"','git config --global init.defaultBranch main','git config --global core.editor nano','git config --global color.ui auto','mkdir -p ~/lesson','cd ~/lesson','echo alpha > notes.txt','echo beta >> notes.txt','echo gamma >> notes.txt']};
 const $=id=>document.getElementById(id); let term,fit,ready=false,emulator; 
@@ -68,7 +68,7 @@ emulator.add_listener('download-error',()=>status('Linux イメージの読み�
 emulator.add_listener('serial0-output-byte',byte=>{tail=(tail+String.fromCharCode(byte)).slice(-64);if(waitDone&&tail.includes('LD-42')){const done=waitDone;waitDone=null;done()}if(quiet)return;pending.push(byte);if(!scheduled){scheduled=true;requestAnimationFrame(()=>{term.write(new Uint8Array(pending));pending=[];scheduled=false})}});
 function type(text){queue+=text;if(draining)return;draining=true;function drain(){if(!queue){draining=false;return}emulator.serial0_send(queue.slice(0,8));queue=queue.slice(8);setTimeout(drain,10)}drain()}
 function run(cmd){return new Promise(resolve=>{tail='';waitDone=resolve;type(cmd+'; echo LD-$((40+2))\n')})}
-emulator.add_listener('emulator-ready',async()=>{await new Promise(r=>setTimeout(r,200));resize();await run(`stty cols ${term.cols} rows ${term.rows}; sudo ld-net ${CONFIG.name} ${CONFIG.ip}; PS1='$ '; cd`+(CONFIG.setup.length?'; '+CONFIG.setup.join(' && '):''));quiet=false;term.reset();term.onData(type);type('\n');ready=true;clearTimeout(timer);status('Ready '+((performance.now()-started)/1000).toFixed(1)+' s');term.focus()});
+emulator.add_listener('emulator-ready',async()=>{await new Promise(r=>setTimeout(r,200));resize();await run(`stty cols ${term.cols} rows ${term.rows}; sudo ld-net ${CONFIG.name} ${CONFIG.ip}; PS1='\\w $ '; cd`+(CONFIG.setup.length?'; '+CONFIG.setup.join(' && '):''));quiet=false;term.reset();term.onData(type);type('\n');ready=true;clearTimeout(timer);status('Ready '+((performance.now()-started)/1000).toFixed(1)+' s');term.focus()});
 }catch(e){clearTimeout(timer);status('起動エラー: '+e.message+' — ページを再読み込みしてください。');console.error(e)}}
 start();
 </script></body></html>
