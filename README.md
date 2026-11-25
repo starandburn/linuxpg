@@ -10,7 +10,7 @@ GitHub Pages で公開した URL をブラウザーで開くと、自動的に L
 
 - コンソールの文字サイズ：27px
 - 作業ディレクトリ：`~/lesson`
-- 初期ファイル：`notes.txt`
+- 初期ファイル：`program.cs`
 - プロンプト：現在のディレクトリと `$`
 - Git ユーザー名：`Student`
 - Git メールアドレス：`student@example.com`
