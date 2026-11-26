@@ -31,9 +31,9 @@ separately under CC BY 4.0; see LICENSE-CONTENT.
 <style>*{box-sizing:border-box}body{margin:0;background:#0a131c;color:#dce4ec;font:14px system-ui;height:100vh;height:100dvh;display:flex;flex-direction:column}header{display:flex;gap:8px;align-items:center;padding:4px 8px;background:#192632;flex-wrap:nowrap;flex-shrink:0;white-space:nowrap;overflow:hidden}header a{color:#aebdca;text-decoration:none;font-size:12px}header a:hover{text-decoration:underline}#status{margin-left:auto;font-size:12px;color:#aebdca}#terminal{flex:1;min-height:0;padding:8px;overflow:hidden}</style></head><body>
 <header><strong>Linux Playground for NKK</strong><a href="https://github.com/dmccuk/learndevops" target="_blank" rel="noopener noreferrer">Based on Learn DevOps</a><a href="https://github.com/dmccuk/learndevops/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a><span id="status" role="status">読み込み中…</span></header><main id="terminal"></main>
 <script type="module">
-const CONFIG = {version:'1.0.0', updated:'2026-11-26', copyright:'Copyright (c) 2026 NKK', base:'https://dmccuk.github.io/learndevops/vm/', fontSize:27, name:'ld-control', ip:'10.5.0.10/24', setup:['git config --global user.name "Student"','git config --global user.email "student@example.com"','git config --global init.defaultBranch main','git config --global core.editor nano','git config --global color.ui auto','mkdir -p ~/lesson','cd ~/lesson',
+const CONFIG = {version:'1.0.1', updated:'2026-11-26', copyright:'Copyright (c) 2026 NKK', base:'https://dmccuk.github.io/learndevops/vm/', fontSize:27, name:'ld-control', ip:'10.5.0.10/24', setup:['git config --global user.name "Student"','git config --global user.email "student@example.com"','git config --global init.defaultBranch main','git config --global core.editor nano','git config --global color.ui auto','mkdir -p ~/lesson','cd ~/lesson',
     "printf '%s\\n' '# Task Manager' '' 'A simple command line task manager.' > readme.md",
-    "printf '%s\\n' 'Console.WriteLine(\"Task Manager v1.0\");' > program.cs",
+    "printf '%s\\n' 'Console.Write(\"Task Manager v1.0\");' > program.cs",
     "printf '%s\\n' VERSION=1.0 DEBUG=false > config.txt",
     "printf '%s\\n' 'Learn Git' 'Learn C#' > tasks.txt"]};
 const $=id=>document.getElementById(id); let term,fit,ready=false,emulator; 
